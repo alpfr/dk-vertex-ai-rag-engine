@@ -254,7 +254,9 @@ The engine supports various document types, including:
   - **Vertex AI RAG Engine Capacity**: If you receive a `400 Invalid Argument` error indicating that `us-central1`, `us-east1`, or `us-east4` are restricted to allowlisted projects, update `LOCATION` in `rag/config/__init__.py` to `europe-west4` or another supported un-restricted region.
 - **Model Availability (404 NOT_FOUND)**: If the Gemini model API throws a 404 when calling `generateContent`, ensure the model exists for your API version. You can verify available `flash` models for your API key by calling `client.models.list()`. Valid fallback models include `gemini-2.5-flash` or `gemini-1.5-flash`. Update `AGENT_MODEL` in `rag/config/__init__.py` accordingly.
 - **CLI Hanging**: If `adk run rag` hangs after sending an input, standard IO processing may be blocked. Use the programmatic execution script (`test_agent.py`) as an alternative.
-- **Upload Issues**: Ensure your file format is supported and file size is within limits.
+- **Upload Issues**: 
+  - Ensure your file format is supported and file size is within limits.
+  - File uploads made through the ADK Web UI will be automatically processed using ADK Artifacts (`load_artifacts`).
 
 ## Contributing
 

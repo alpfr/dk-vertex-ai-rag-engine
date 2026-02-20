@@ -296,7 +296,7 @@ def list_blobs_in_bucket(
             "message": f"An unexpected error occurred: {str(e)}"
         }
 
-def upload_file_to_gcs(
+async def upload_file_to_gcs(
     tool_context: ToolContext,
     bucket_name: str,
     file_artifact_name: str,
@@ -319,58 +319,62 @@ def upload_file_to_gcs(
     if content_type is None:
         content_type = GCS_DEFAULT_CONTENT_TYPE
     try:
-        # Check if user_content contains a PDF attachment
-        if (hasattr(tool_context, "user_content") and 
-            tool_context.user_content and 
-            tool_context.user_content.parts):
+        # Check if the artifact exists in the user's session
+        artifact = await tool_context.load_artifact(file_artifact_name)
+        
+        # If not found, try with user: prefix for cross-session artifacts
+        if not artifact and not file_artifact_name.startswith("user:"):
+            prefixed_name = f"user:{file_artifact_name}"
+            artifact = await tool_context.load_artifact(prefixed_name)
             
-            # Look for any file in parts
-            file_data = None
+        file_data = None
+        if artifact and hasattr(artifact, "inline_data") and artifact.inline_data:
+            file_data = artifact.inline_data.data
+        elif hasattr(tool_context, "user_content") and tool_context.user_content and tool_context.user_content.parts:
+            # Fallback: check if the user uploaded parts straight into the prompt content instead
             for part in tool_context.user_content.parts:
                 if hasattr(part, "inline_data") and part.inline_data:
-                    if part.inline_data.mime_type.startswith("application/"):
-                        file_data = part.inline_data.data
-                        break
-            
-            if file_data:
-                # We found file data in the user message
-                if not destination_blob_name:
-                    destination_blob_name = file_artifact_name
-                    if content_type == "application/pdf" and not destination_blob_name.lower().endswith(".pdf"):
-                        destination_blob_name += ".pdf"
-                
-                # Upload to GCS
-                client = storage.Client(project=PROJECT_ID)
-                bucket = client.bucket(bucket_name)
-                blob = bucket.blob(destination_blob_name)
-                
-                blob.upload_from_string(
-                    data=file_data,
-                    content_type=content_type
-                )
-                
-                # Generate a URL
-                try:
-                    url = blob.public_url
-                except:
-                    url = f"gs://{bucket_name}/{destination_blob_name}"
-                
-                return {
-                    "status": "success",
-                    "bucket": bucket_name,
-                    "filename": destination_blob_name,
-                    "gcs_uri": f"gs://{bucket_name}/{destination_blob_name}",
-                    "size_bytes": len(file_data),
-                    "content_type": content_type,
-                    "url": url,
-                    "message": f"Successfully uploaded file to gs://{bucket_name}/{destination_blob_name}"
-                }
+                    file_data = part.inline_data.data
+                    break
         
-        # If no file found in user content, return error
+        if file_data:
+            if not destination_blob_name:
+                destination_blob_name = file_artifact_name.replace("user:", "")
+                if content_type == "application/pdf" and not destination_blob_name.lower().endswith(".pdf"):
+                    destination_blob_name += ".pdf"
+            
+            # Upload to GCS
+            client = storage.Client(project=PROJECT_ID)
+            bucket = client.bucket(bucket_name)
+            blob = bucket.blob(destination_blob_name)
+            
+            blob.upload_from_string(
+                data=file_data,
+                content_type=content_type
+            )
+            
+            # Generate a URL
+            try:
+                url = blob.public_url
+            except:
+                url = f"gs://{bucket_name}/{destination_blob_name}"
+            
+            return {
+                "status": "success",
+                "bucket": bucket_name,
+                "filename": destination_blob_name,
+                "gcs_uri": f"gs://{bucket_name}/{destination_blob_name}",
+                "size_bytes": len(file_data),
+                "content_type": content_type,
+                "url": url,
+                "message": f"Successfully uploaded file '{file_artifact_name}' to gs://{bucket_name}/{destination_blob_name}"
+            }
+        
+        # If no file found in artifacts or user content, return error
         return {
             "status": "error",
-            "message": "No file found in the current message. Please upload a file and try again.",
-            "details": "Files must be attached directly to the current message."
+            "message": f"Could not find artifact '{file_artifact_name}' in the current session. Please upload a file and try again.",
+            "details": "Files must be attached directly to the current message or exist in the artifact service."
         }
     except GoogleAPIError as e:
         return {
