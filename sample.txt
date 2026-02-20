@@ -1,0 +1,1 @@
+This is a sample document for testing the new Vertex AI RAG Engine MVP integration with Google ADK. The ADK agent handles routing and orchestrates tools for GCS and RAG corpora management.

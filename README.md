@@ -182,7 +182,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-key.json
 
 ### Running the Agent
 
-There are two ways to run the agent:
+There are three ways to run the agent:
 
 ```bash
 # Option 1: Use ADK web interface (recommended for interactive usage)
@@ -190,9 +190,12 @@ adk web
 
 # Option 2: Run the agent directly in the terminal
 adk run rag
+
+# Option 3: Run the agent programmatically (useful if CLI environments hang)
+python test_agent.py
 ```
 
-The web interface provides a chat-like experience for interacting with the agent, while the direct run option is suitable for scripting and automated workflows.
+The web interface provides a chat-like experience for interacting with the agent, while the direct run options are suitable for scripting and automated workflows. If the CLI hangs during standard `adk run rag` usage, refer to the included `test_agent.py` which executes the agent directly via the ADK `Runner` pipeline.
 
 ### Example Commands
 
@@ -246,9 +249,12 @@ The engine supports various document types, including:
 
 ### Common Issues
 
-- **403 Errors**: Make sure you've authenticated with `gcloud auth application-default login`
-- **Resource Exhausted**: Check your quota limits in the GCP Console
-- **Upload Issues**: Ensure your file format is supported and file size is within limits
+- **403 Errors**: Make sure you've authenticated with `gcloud auth application-default login`. Check your IAM permissions (`roles/aiplatform.user`, `roles/storage.objectAdmin`) in the GCP Console.
+- **Resource Exhausted / Configuration Limits**: Check your quota limits in the GCP Console.
+  - **Vertex AI RAG Engine Capacity**: If you receive a `400 Invalid Argument` error indicating that `us-central1`, `us-east1`, or `us-east4` are restricted to allowlisted projects, update `LOCATION` in `rag/config/__init__.py` to `europe-west4` or another supported un-restricted region.
+- **Model Availability (404 NOT_FOUND)**: If the Gemini model API throws a 404 when calling `generateContent`, ensure the model exists for your API version. You can verify available `flash` models for your API key by calling `client.models.list()`. Valid fallback models include `gemini-2.5-flash` or `gemini-1.5-flash`. Update `AGENT_MODEL` in `rag/config/__init__.py` accordingly.
+- **CLI Hanging**: If `adk run rag` hangs after sending an input, standard IO processing may be blocked. Use the programmatic execution script (`test_agent.py`) as an alternative.
+- **Upload Issues**: Ensure your file format is supported and file size is within limits.
 
 ## Contributing
 

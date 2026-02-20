@@ -4,8 +4,8 @@ Configuration settings for the Vertex AI RAG engine.
 import os
 
 # Google Cloud Project Settings
-PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT")  # Replace with your project ID
-LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")  # Default location for Vertex AI and GCS resources
+PROJECT_ID = "alpfr-splunk-integration"  # Replace with your project ID
+LOCATION = "europe-west4"  # Default location for Vertex AI and GCS resources
 
 # GCS Storage Settings
 GCS_DEFAULT_STORAGE_CLASS = "STANDARD"
@@ -23,7 +23,7 @@ RAG_DEFAULT_PAGE_SIZE = 50  # Default page size for listing files
 
 # Agent Settings
 AGENT_NAME = "rag_corpus_manager"
-AGENT_MODEL = "gemini-2.0-flash-exp"
+AGENT_MODEL = "gemini-2.5-flash"
 AGENT_OUTPUT_KEY = "last_response"
 
 # Logging Settings
