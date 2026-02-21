@@ -258,6 +258,14 @@ The engine supports various document types, including:
   - Ensure your file format is supported and file size is within limits.
   - File uploads made through the ADK Web UI will be automatically processed using ADK Artifacts (`load_artifacts`).
 
+## Limitations
+
+The MVP architecture serves as an effective cloud-based proof-of-concept, but relies heavily on the following constraints:
+- **Cloud Dependency & Vendor Lock-in**: Fully dependent on Google Cloud (Vertex AI, GCS, Gemini API). Requires active internet connectivity and restricts air-gapped or on-premise execution.
+- **Regional Capacity Quotas**: Vertex AI RAG Engine has strict regional deployment quotas, occasionally necessitating routing to alternate regions (e.g., `europe-west4`) instead of standard hubs (`us-central1`).
+- **Standard Semantic Retrieval**: The engine exclusively executes standard vector search retrieval without any capability for complex Knowledge Graph (GraphRAG) multi-hop relationship extraction or multi-modal reasoning.
+- **CLI Native Instabilities**: The ADK UI framework commands occasionally hang during standard IO processing, requiring programmatic execution fallbacks.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
